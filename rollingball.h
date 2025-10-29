@@ -15,31 +15,27 @@ public:
     int degree = 3;
     std::vector<float> t = {0, 0, 0, 1, 2, 2, 2}; // knot vector, the length of t should be n + d + 2
     std::vector<glm::vec3> controlPoints = {glm::vec3(0, 0, 0), glm::vec3(0.0f, -0.2f,  1.0f), glm::vec3(1, -0.5, 0), glm::vec3(1, -0.4,  1)};
-                         //controlPoints = {};
+    //controlPoints = {};
 
 private:
-    float findKnotInterval(float x)
+    int findKnotInterval(float x) const
     {
-        if(x == 1.5){
-            return 3;
-        }
-        else if(x == 2){
-            return 2;
-        }
-        else{
-    /*qDebug() << x;
-        int my = sizeof(controlPoints) - 1; // indekstilsistekontrollpunkt
+        if (controlPoints.empty() || t.empty())
+            return 0;
 
-        while (x < t[my])
-        {
-            my--;
-        }
+        int n = (int)controlPoints.size() - 1;
+        int m = (int)t.size() - 1;
+        float low = t[degree];
+        float high = t[n+1];
 
-        return my;*/
-            return 3;
-        }
+        if (x <= low) return degree;
+        if (x >= high) return n;
+
+        int k = std::upper_bound(t.begin(), t.end(), x) - t.begin() - 1;
+        k = std::max(k, degree);
+        k = std::min(k, n);
+        return k;
     }
-
 public:
     glm::vec3 EvaluateBSplineSimple(float x)
     {
@@ -83,18 +79,36 @@ public:
     float mass = 0.05;
     glm::vec3 velocity;
     glm::vec3 gravity = glm::vec3(0, -0.98, 0);
-    glm::vec3 updateVelocity(float tan){
+    /*glm::vec3 updateVelocity(float tan){
         return glm::vec3(
             mass * curve.EvaluateBSplineSimple(tan).x,
             mass * gravity.y * curve.EvaluateBSplineSimple(tan).y,
-            mass * curve.EvaluateBSplineSimple(tan).z); };
-/*
+            mass * curve.EvaluateBSplineSimple(tan).z); };*/
+    /*
     glm::vec3 updateVelocity(float tan){
         return glm::vec3(
             mass * tan,
             mass * tan * gravity.y,
             mass * tan); };
 */
+
+    glm::vec3 updateVelocity(float u)
+    {
+        float step = 0.001f;
+        float u1 = u;
+        float u2 = glm::clamp(u + step, curve.t[curve.degree], curve.t[curve.controlPoints.size() - 1 + 1]);
+
+        glm::vec3 p1 = curve.EvaluateBSplineSimple(u1);
+        glm::vec3 p2 = curve.EvaluateBSplineSimple(u2);
+        glm::vec3 tangent = p2 - p1;
+        if (glm::length(tangent) > 1e-6f)
+            tangent = glm::normalize(tangent);
+        else
+            tangent = glm::vec3(0.0f);
+
+        return tangent * mass * 0.1f;
+    }
+
     Terrain* terrainMesh;
     Mesh* ballMesh;
 };
