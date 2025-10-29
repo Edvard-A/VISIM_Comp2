@@ -20,21 +20,21 @@ public:
 private:
     int findKnotInterval(float x) const
     {
+
         if (controlPoints.empty() || t.empty())
             return 0;
 
         int n = (int)controlPoints.size() - 1;
-        int m = (int)t.size() - 1;
         float low = t[degree];
         float high = t[n+1];
 
         if (x <= low) return degree;
         if (x >= high) return n;
 
-        int k = std::upper_bound(t.begin(), t.end(), x) - t.begin() - 1;
-        k = std::max(k, degree);
-        k = std::min(k, n);
-        return k;
+        int my = std::upper_bound(t.begin(), t.end(), x) - t.begin() - 1;
+        my = std::max(my, degree);
+        my = std::min(my, n);
+        return my;
     }
 public:
     glm::vec3 EvaluateBSplineSimple(float x)

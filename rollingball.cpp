@@ -28,48 +28,33 @@ void RollingBall::Init()
 
 void RollingBall::Update()
 {
-    qDebug() << "Spline ";
-    /*float tangen = 1;
+    static float u = curve.t[curve.degree];
+    static float v = 0.0f;
+    float dt = 1.0f / 60.0f;
 
-    tangen =
-        (curve.EvaluateBSplineSimple(t2).y+curve.EvaluateBSplineSimple(t1).y)/
-        ((curve.EvaluateBSplineSimple(t2).z+curve.EvaluateBSplineSimple(t1).z)+
-         (curve.EvaluateBSplineSimple(t2).x+curve.EvaluateBSplineSimple(t1).x));
+    glm::vec3 p = curve.EvaluateBSplineSimple(u);
+    glm::vec3 p_next = curve.EvaluateBSplineSimple(u + 0.001f);
+    glm::vec3 tangent = glm::normalize(p_next - p);
 
-    t1 = t2;
-    t2 += 0.001;
+    float a_tangent = glm::dot(gravity, tangent);
 
+    float acceleration = a_tangent;
 
-    tangen = tan(tangen);
-*/
-    glm::vec3 pos = ballMesh->GetPosition();
+    acceleration -= v;
 
-    t1 = t2;
-    t2 += 0.001f;
-    float domainStart = curve.t[curve.degree];
-    float domainEnd   = curve.t[curve.controlPoints.size() - 1 + 1];
-    if (t2 > domainEnd) t2 = domainStart;
+    v += acceleration * dt;
+    u += v * dt;
 
-    glm::vec3 p1 = curve.EvaluateBSplineSimple(t1);
-    glm::vec3 p2 = curve.EvaluateBSplineSimple(t2);
-    glm::vec3 tangent = p2 - p1;
-    if (glm::length(tangent) > 1e-6f)
-        tangent = glm::normalize(tangent);
+    float u_min = curve.t[curve.degree];
+    float u_max = curve.t[curve.controlPoints.size()];
+    if (u > u_max) u = u_min;
 
+    velocity = glm::vec3();
+    glm::vec3 pos = curve.EvaluateBSplineSimple(u);
 
-
-    /*if (input.Held(input.Key.SPACE))
-    {*/
-        pos = glm::vec3();
-        velocity = glm::vec3();
-    //}
-
-    //velocity += curve.EvaluateBSplineSimple(0);
-    velocity += updateVelocity(t1);//updateVelocity(tangen);
-
-    pos += velocity / 60.0f;
     pos.y = terrainMesh->GetHeightAt(pos) + 0.1f;
 
-    qDebug() << "xPos"<< pos.x;
     ballMesh->SetPosition(pos);
+
+    qDebug() << "u:" << u << "v:" << v << "pos:" << pos.x << pos.y << pos.z;
 }
